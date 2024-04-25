@@ -1,6 +1,6 @@
 const axios = require('axios');
 const Attendance = require('../models/attendances.model');
-const BASE_FLASK_API_URL = 'http://localhost:5000';
+const BASE_FLASK_API_URL = 'https://zkpi.omegup.tn';
 const wss = require('../index').wss;
 
 /**

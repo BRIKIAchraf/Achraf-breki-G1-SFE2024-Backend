@@ -1,5 +1,5 @@
 const axios = require('axios');
-const FLASK_API_URL = 'http://localhost:5000';
+const FLASK_API_URL = 'https://zkpi.omegup.tn/';
 const DEVICE_ID = 'A8N5230560263';
 
 /**

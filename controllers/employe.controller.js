@@ -3,7 +3,7 @@ const axios = require('axios');
 const PDFDocument = require('pdfkit');
 const Employe = require('../models/employe.model');
 const Attendance = require('../models/attendances.model');
-const BASE_FLASK_API_URL = 'http://localhost:5000';
+const BASE_FLASK_API_URL = 'https://zkpi.omegup.tn/';
 const DEVICE_ID_HEADER = { headers: { 'Device-ID': 'A8N5230560263' } };
 
 /**
@@ -202,6 +202,7 @@ exports.getAllEmployes = async (req, res) => {
 };
 
 // Helper function to calculate the total hours of delay based on attendance records
+// Helper function to calculate the total hours of delay based on attendance records
 const calculateTotalHoursOfDelay = async (employeeId) => {
   try {
     // Fetch attendance records for the employee
@@ -222,4 +223,14 @@ const calculateTotalHoursOfDelay = async (employeeId) => {
         
         // If the delay is greater than the threshold, add it to the total delay hours
         if (delay > threshold) {
-          totalDelayHours += delay / (1
+          totalDelayHours += delay / (60 * 60 * 1000); // Converts delay from milliseconds to hours
+        }
+      }
+    });
+
+    return totalDelayHours;
+  } catch (error) {
+    console.error('Error calculating total hours of delay:', error);
+    throw error;
+  }
+};

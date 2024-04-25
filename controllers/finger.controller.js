@@ -1,5 +1,5 @@
 const axios = require('axios');
-const BASE_FLASK_API_URL = 'http://localhost:5000';
+const BASE_FLASK_API_URL = 'https://zkpi.omegup.tn/';
 const DEVICE_ID_HEADER = { headers: { 'Device-ID': 'A8N5230560263' } }; // Define the header once and use it in all requests
 
 /**
