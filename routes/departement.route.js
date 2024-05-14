@@ -12,6 +12,7 @@ router.get('/', departementController.getAllDepartementsWithEmployees);
 router.post('/assign-employee', departementController.assignEmployeeToDepartement);
 
 // Route pour supprimer un employé d'un département
-router.delete('/remove-employee', departementController.removeEmployeeFromDepartement);
+router.delete('/remove-employee/:id', departementController.removeEmployeeFromDepartement);
 
+router.delete('/:id', departementController.deleteDepartement);
 module.exports = router;

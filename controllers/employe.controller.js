@@ -6,6 +6,37 @@ const Attendance = require('../models/attendances.model');
 const BASE_FLASK_API_URL = 'https://zkpi.omegup.tn/';
 const DEVICE_ID_HEADER = { headers: { 'Device-ID': 'A8N5230560263' } };
 
+// Utility function to sync employee details with the external API
+async function syncEmployeeDetails(id, updates) {
+  const updatedEmploye = await Employe.findByIdAndUpdate(id, updates, { new: true }).populate('id_planning id_departement');
+  try {
+    await axios.patch(`${BASE_FLASK_API_URL}/user/${id}`, {
+      planning: updatedEmploye.id_planning ? updatedEmploye.id_planning.name : '',
+      departement: updatedEmploye.id_departement ? updatedEmploye.id_departement.name : '',
+      login_method: updatedEmploye.login_method
+    }, DEVICE_ID_HEADER);
+  } catch (error) {
+    console.error('Error syncing employee details with external API:', error);
+  }
+}
+
+// Helper function to handle API requests and retry failed requests
+async function retryApiRequest(requestFn, retryCount = 3, delay = 2000) {
+  for (let attempt = 0; attempt < retryCount; attempt++) {
+    try {
+      return await requestFn();
+    } catch (error) {
+      if (attempt < retryCount - 1) {
+        console.log(`Retrying API request, attempt ${attempt + 1}`);
+        await new Promise(resolve => setTimeout(resolve, delay));
+      } else {
+        console.error('Failed to complete API request after multiple attempts:', error);
+        throw error;
+      }
+    }
+  }
+}
+
 /**
  * Creates a new employee.
  * @param {Object} req - The request object.
@@ -14,37 +45,20 @@ const DEVICE_ID_HEADER = { headers: { 'Device-ID': 'A8N5230560263' } };
  */
 exports.createEmploye = async (req, res) => {
   try {
-    // Validate required fields
     if (!req.body.nom || !req.body.user_id) {
       return res.status(400).json({ message: "'nom' and 'user_id' fields are required." });
     }
-
-    // Create a new employee instance
     const newEmploye = new Employe({
       ...req.body,
-      externalId: req.body.user_id.toString(), // Set externalId based on user_id
-      prenom: req.body.prenom || "N/A",
-      date_naissance: req.body.date_naissance || new Date(),
-      login_method: req.body.login_method || "PassOrFingerOrCard",
-      type: req.body.type || "Permanent"
+      externalId: req.body.user_id.toString()
     });
-
-    // Save the new employee to the database
     await newEmploye.save();
-
-    // Prepare data for external API
-    const externalEmploye = {
-      uid: newEmploye.user_id.toString(),
-      name: newEmploye.nom,
-      card: parseInt(req.body.card, 10) || 0,
-      group_id: req.body.group_id || "",
-      password: req.body.password || "",
-      privilege: parseInt(req.body.privilege, 10) || 0
-    };
-
-    // Send employee data to external API
-    console.log('Sending to external API:', externalEmploye);
-    await axios.post(`${BASE_FLASK_API_URL}/users`, externalEmploye, DEVICE_ID_HEADER);
+    try {
+      await retryApiRequest(() => syncEmployeeDetails(newEmploye._id, req.body));
+    } catch {
+      // Log the error but don't prevent the local save
+      console.warn('Employee created locally but failed to sync with external API.');
+    }
     res.status(201).json(newEmploye);
   } catch (error) {
     console.error('Error creating employee:', error);
@@ -61,21 +75,14 @@ exports.createEmploye = async (req, res) => {
 exports.modifyEmploye = async (req, res) => {
   const { id } = req.params;
   try {
-    // Find and update the employee
-    const updatedEmploye = await Employe.findByIdAndUpdate(id, req.body, { new: true });
-    if (!updatedEmploye) {
-      return res.status(404).json({ message: 'Employee not found' });
+    await Employe.findByIdAndUpdate(id, req.body, { new: true });
+    try {
+      await retryApiRequest(() => syncEmployeeDetails(id, req.body));
+    } catch {
+      // Log the error but don't prevent the local update
+      console.warn('Employee updated locally but failed to sync with external API.');
     }
-
-    // Prepare data for external API
-    const externalEmploye = {
-      name: updatedEmploye.nom,
-    };
-
-    // Update employee data in external API
-    console.log('Updating external API:', externalEmploye);
-    await axios.patch(`${BASE_FLASK_API_URL}/user/${updatedEmploye._id}`, externalEmploye, DEVICE_ID_HEADER);
-    res.status(200).json(updatedEmploye);
+    res.status(200).json({ message: 'Employee updated successfully' });
   } catch (error) {
     console.error('Error updating employee:', error);
     res.status(500).json({ message: 'Error updating employee: ' + error.message });
@@ -91,15 +98,16 @@ exports.modifyEmploye = async (req, res) => {
 exports.deleteEmploye = async (req, res) => {
   const { id } = req.params;
   try {
-    // Find and delete the employee
     const employeToDelete = await Employe.findByIdAndDelete(id);
     if (!employeToDelete) {
       return res.status(404).json({ message: 'Employee not found' });
     }
-
-    // Delete the employee from the external API
-    console.log('Deleting from external API: user_id', employeToDelete._id);
-    await axios.delete(`${BASE_FLASK_API_URL}/user/${employeToDelete._id}`, DEVICE_ID_HEADER);
+    try {
+      await retryApiRequest(() => axios.delete(`${BASE_FLASK_API_URL}/user/${employeToDelete._id}`, DEVICE_ID_HEADER));
+    } catch {
+      // Log the error but don't prevent the local delete
+      console.warn('Employee deleted locally but failed to delete from external API.');
+    }
     res.status(200).json({ message: 'Employee deleted successfully' });
   } catch (error) {
     console.error('Error deleting employee:', error);
@@ -157,7 +165,6 @@ exports.getEmployeById = async (req, res) => {
     return res.status(400).json({ message: 'Invalid ID format' });
   }
   try {
-    // Find employee by ID and populate card details
     const employe = await Employe.findById(id).populate('card');
     if (!employe) {
       return res.status(404).json({ message: 'Employee not found' });
@@ -170,60 +177,63 @@ exports.getEmployeById = async (req, res) => {
 };
 
 /**
- * Retrieves all employees and syncs with external API.
+ * Retrieves all employees with pagination and filtering support.
  * @param {Object} req - The request object.
  * @param {Object} res - The response object.
  * @returns {Promise<void>}
  */
 exports.getAllEmployes = async (req, res) => {
-  try {
-    // Fetch employees from external API
-    const response = await axios.get(`${BASE_FLASK_API_URL}/users`, DEVICE_ID_HEADER);
-    await Promise.all(response.data.map(async (extEmployee) => {
-      // Upsert employee data in the local database
-      await Employe.findOneAndUpdate(
-        { externalId: extEmployee.uid.toString() },
-        {
-          externalId: extEmployee.uid.toString(),
-          nom: extEmployee.name || "N/A",
-          // map other fields as necessary
-        },
-        { upsert: true, new: true, setDefaultsOnInsert: true }
-      );
-    }));
+  const { page = 1, limit = 10, name } = req.query;
+  const skip = (page - 1) * limit;
+  const filters = {};
 
-    // Retrieve and return local employees
-    const localEmployes = await Employe.find();
-    res.status(200).json(localEmployes);
+  if (name) {
+    filters.nom = { $regex: new RegExp(name, 'i') };
+  }
+
+  try {
+    let externalEmployes = [];
+    try {
+      const response = await retryApiRequest(() => axios.get(`${BASE_FLASK_API_URL}/users`, DEVICE_ID_HEADER));
+      externalEmployes = response.data;
+      await Promise.all(externalEmployes.map(async (extEmployee) => {
+        await Employe.findOneAndUpdate(
+          { externalId: extEmployee.uid.toString() },
+          {
+            externalId: extEmployee.uid.toString(),
+            nom: extEmployee.name || "N/A",
+          },
+          { upsert: true, new: true, setDefaultsOnInsert: true }
+        );
+      }));
+    } catch {
+      console.warn('Connection to external API failed. Serving local data.');
+    }
+
+    const localEmployes = await Employe.find(filters).skip(skip).limit(limit);
+    const totalCount = await Employe.countDocuments(filters);
+
+    res.status(200).json({ employees: localEmployes, totalCount });
   } catch (error) {
     console.error('Error fetching and syncing employees:', error);
     res.status(500).json({ message: 'Error fetching and syncing employees: ' + error.message });
   }
 };
 
-// Helper function to calculate the total hours of delay based on attendance records
-// Helper function to calculate the total hours of delay based on attendance records
 const calculateTotalHoursOfDelay = async (employeeId) => {
   try {
-    // Fetch attendance records for the employee
     const attendanceRecords = await Attendance.find({ user_id: employeeId });
     let totalDelayHours = 0;
 
-    // Iterate through each attendance record
     attendanceRecords.forEach(record => {
-      // Calculate delay for each record (if status is 'present' and there is a punch time)
       if (record.status === 'present' && record.punch) {
-        // Consider a threshold for defining a delay (e.g., 15 minutes)
-        const threshold = 15 * 60 * 1000; // 15 minutes in milliseconds
+        const threshold = 15 * 60 * 1000;
         const punchTime = new Date(record.punch);
         const expectedEntryTime = new Date(record.timestamp);
         
-        // Calculate the delay
         const delay = Math.max(punchTime.getTime() - expectedEntryTime.getTime(), 0);
-        
-        // If the delay is greater than the threshold, add it to the total delay hours
         if (delay > threshold) {
-          totalDelayHours += delay / (60 * 60 * 1000); // Converts delay from milliseconds to hours
+          totalDelayHours += delay / (60 * 60 * 1000);
         }
       }
     });
@@ -231,6 +241,16 @@ const calculateTotalHoursOfDelay = async (employeeId) => {
     return totalDelayHours;
   } catch (error) {
     console.error('Error calculating total hours of delay:', error);
+    throw error;
+  }
+};
+
+const calculateNumberOfPresences = async (employeeId) => {
+  try {
+    const attendanceRecords = await Attendance.find({ user_id: employeeId, status: 'present' });
+    return attendanceRecords.length;
+  } catch (error) {
+    console.error('Error calculating number of presences:', error);
     throw error;
   }
 };

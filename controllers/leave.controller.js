@@ -65,16 +65,30 @@ exports.modifyLeave = async (req, res) => {
 };
 
 /**
- * Lists all leaves along with the employee details.
+ * Lists all leaves along with the employee details with pagination and filtering support.
  * @param {Object} req - The request object.
  * @param {Object} res - The response object.
  * @returns {Promise<void>}
  */
 exports.listLeaves = async (req, res) => {
+  const { page = 1, limit = 10, status } = req.query;
+  const skip = (page - 1) * limit;
+  const filters = {};
+
+  // Apply status filter if provided
+  if (status) {
+    filters.status = status;
+  }
+
   try {
-    const leaves = await Leave.find().populate('employee');
-    res.status(200).json(leaves);
+    // Fetch leaves with pagination and filtering
+    const leaves = await Leave.find(filters).skip(skip).limit(limit).populate('employee');
+    const totalCount = await Leave.countDocuments(filters);
+
+    res.status(200).json({ leaves, totalCount });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('Error fetching leaves:', error);
+    res.status(500).json({ message: 'Error fetching leaves: ' + error.message });
   }
 };
+

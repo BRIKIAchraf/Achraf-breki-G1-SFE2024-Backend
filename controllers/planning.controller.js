@@ -42,33 +42,49 @@ exports.createPlanningWithJours = async (req, res) => {
 };
 
 /**
- * Retrieves all plannings.
+ * Retrieves all plannings with pagination and filtering support, along with associated jours.
  * @param {Object} req - The request object.
  * @param {Object} res - The response object.
  * @returns {Promise<void>}
  */
 exports.getAllPlannings = async (req, res) => {
+  const { page = 1, limit = 10 } = req.query;
+  const skip = (page - 1) * limit;
+
   try {
-    const plannings = await Planning.find();
-    res.status(200).json(plannings);
+    // Fetch plannings with pagination
+    const plannings = await Planning.find().skip(skip).limit(limit);
+
+    // Fetch associated jours for each planning
+    const planningWithJours = await Promise.all(plannings.map(async (planning) => {
+      const jours = await Jour.find({ id_planning: planning._id });
+      return { ...planning.toObject(), jours };
+    }));
+
+    res.status(200).json(planningWithJours);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
 
 /**
- * Retrieves a planning by its ID.
+ * Retrieves a planning by its ID, along with associated jours.
  * @param {Object} req - The request object.
  * @param {Object} res - The response object.
  * @returns {Promise<void>}
  */
 exports.getPlanningById = async (req, res) => {
   try {
+    // Fetch planning by ID
     const planning = await Planning.findById(req.params.id);
     if (!planning) {
       return res.status(404).json({ message: 'Planning not found' });
     }
-    res.status(200).json(planning);
+
+    // Fetch associated jours for the planning
+    const jours = await Jour.find({ id_planning: planning._id });
+
+    res.status(200).json({ ...planning.toObject(), jours });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

@@ -1,9 +1,40 @@
+require('dotenv').config();
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
 const WebSocket = require("ws");
 const http = require("http");
+const cron = require('node-cron');
+const session = require('express-session');
+const { auth } = require("express-openid-connect");
 
+// Configuring Auth0
+const config = {
+  authRequired: false,
+  auth0Logout: true,
+  secret: process.env.SECRET,
+  baseURL: process.env.BASE_URL,
+  clientID: process.env.CLIENT_ID,
+  issuerBaseURL: process.env.ISSUER_BASE_URL
+};
+
+const app = express();
+const server = http.createServer(app);
+const wss = new WebSocket.Server({ server });
+
+// Middleware setup
+app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
+app.use(cors());
+app.use(session({
+  secret: process.env.SESSION_SECRET,
+  resave: false,
+  saveUninitialized: true,
+  cookie: { secure: false } // Set to true if using HTTPS
+}));
+app.use(auth(config)); // Auth0 middleware
+
+// Route handlers
 const employeRoutes = require('./routes/employe.route');
 const planningRoutes = require('./routes/planning.route');
 const attendanceRoutes = require('./routes/attendances.route');
@@ -12,15 +43,8 @@ const leaveRoutes = require('./routes/leave.route');
 const fingerRoutes = require('./routes/finger.route');
 const cardRoutes = require('./routes/card.route');
 const departementRoutes = require('./routes/departement.route');
-const app = express();
-const server = http.createServer(app);
-const wss = new WebSocket.Server({ server });
-
-const port = 3000; // Port statique de votre choix
-
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
-app.use(cors());
+const loginMethodRoutes = require('./routes/loginMethod.route');
+const searchRoutes = require('./routes/search.route');
 
 app.use('/api/employes', employeRoutes);
 app.use('/api/plannings', planningRoutes);
@@ -30,32 +54,36 @@ app.use('/api/fingers', fingerRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/cards', cardRoutes);
 app.use('/api/departements', departementRoutes);
+app.use('/api/loginMethods', loginMethodRoutes);
+app.use('/api', searchRoutes);
+
+// Welcome route
 app.get("/", (req, res) => {
-  res.send("Hello from Node API Server Updated");
+  res.send(req.oidc.isAuthenticated() ? 'Logged in' : 'Logged out');
 });
 
+// WebSocket connection and messaging
 wss.on('connection', function connection(ws) {
-  console.log('A client connected');
-
+  console.log('WebSocket client connected');
   ws.on('message', function incoming(message) {
     console.log('received: %s', message);
   });
-
   ws.on('close', function close() {
-    console.log('A client disconnected');
+    console.log('WebSocket client disconnected');
   });
-
   ws.send('Welcome to the WebSocket server!');
 });
 
-mongoose
-  .connect("mongodb://localhost:27017/PFE-Project")
+// MongoDB connection and server initialization
+mongoose.connect("mongodb://localhost:27017/PFE-Project")
   .then(() => {
     console.log("Connected to database!");
-    server.listen(port, () => {
-      console.log(`Server running on port ${port}`);
+    server.listen(process.env.PORT || 3001, () => {
+      console.log(`Server running on port ${process.env.PORT || 3001}`);
     });
   })
   .catch((error) => {
     console.error("Connection failed!", error);
   });
+
+module.exports = app;

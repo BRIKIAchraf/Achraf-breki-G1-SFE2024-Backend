@@ -63,3 +63,18 @@ exports.removeEmployeeFromDepartement = async (req, res) => {
     res.status(500).send(error);
   }
 };
+
+exports.deleteDepartement = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const departement = await Departement.findByIdAndDelete(id);
+
+    if (!departement) {
+      return res.status(404).send({ message: 'Department not found' });
+    }
+
+    res.send({ message: 'Department deleted successfully' });
+  } catch (error) {
+    res.status(500).send(error);
+  }
+};

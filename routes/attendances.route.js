@@ -8,5 +8,4 @@ router.get('/', attendanceController.getAttendances);
 // supprision de toutes les présences  DELETE /api/attendances/all   
 router.delete('/all', attendanceController.deleteAllAttendances);
 // Ajoutez ici d'autres routes pour la création, la mise à jour, et la suppression
-
 module.exports = router;

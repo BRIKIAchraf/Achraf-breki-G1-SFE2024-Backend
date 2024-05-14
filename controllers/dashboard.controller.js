@@ -20,11 +20,28 @@ exports.getDashboardStats = async (req, res) => {
     // Count employees with login method 'FingerAndPass'
     const totalWithFingerprints = await Employe.countDocuments({ login_method: 'FingerAndPass' });
 
+    // Count employees currently on leave
+    const employeesOnLeave = await Employe.countDocuments({ isOnLeave: true });
+
     // Calculate average age of employees
     const ageSum = (await Employe.aggregate([
       { $group: { _id: null, totalAge: { $sum: { $subtract: [new Date(), '$date_naissance'] } } } }
     ]))[0].totalAge;
     const averageAge = ageSum / totalEmployees / (365 * 24 * 60 * 60 * 1000); // Convert milliseconds to years
+
+    // Count employees by department
+    const employeesByDepartment = await Employe.aggregate([
+      { $group: { _id: '$department', count: { $sum: 1 } } }
+    ]);
+
+    // Count employees on leave by department
+    const leaveByDepartment = await Employe.aggregate([
+      { $match: { isOnLeave: true } },
+      { $group: { _id: '$department', onLeaveCount: { $sum: 1 } } }
+    ]);
+
+    // Count the number of distinct departments
+    const departmentCount = employeesByDepartment.length;
 
     // Send the dashboard statistics as JSON response
     res.status(200).json({
@@ -32,7 +49,11 @@ exports.getDashboardStats = async (req, res) => {
       totalWithCard,
       totalWithPassword,
       totalWithFingerprints,
-      averageAge
+      averageAge,
+      employeesOnLeave,
+      departmentCount,
+      employeesByDepartment,
+      leaveByDepartment
     });
   } catch (error) {
     // Handle errors and send appropriate response
