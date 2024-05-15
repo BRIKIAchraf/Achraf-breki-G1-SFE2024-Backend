@@ -6,14 +6,15 @@ const employeSchema = new mongoose.Schema({
   prenom: { type: String, required: true },
   date_naissance: { type: Date, required: true },
   type: { type: String, required: true },
-  id_planning: { type: mongoose.Schema.Types.ObjectId, ref: 'Planning', required: false},
-  id_departement: { type: mongoose.Schema.Types.ObjectId, ref: 'Departement', required: false},
+  id_planning: { type: mongoose.Schema.Types.ObjectId, ref: 'Planning', required: false },
+  id_departement: { type: mongoose.Schema.Types.ObjectId, ref: 'Departement', required: false },
   login_method: {
     type: String,
     enum: ['PassOrFingerOrCard', 'Card', 'FingerAndPass'],
     required: false
   },
-  externalId: { type: String, required: false, unique: true }
+  externalId: { type: String, required: false, unique: true },
+  picture: { type: String, required: false } // New field for picture URL
 });
 
 module.exports = mongoose.model('Employe', employeSchema);

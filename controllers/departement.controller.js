@@ -1,7 +1,6 @@
 const Departement = require('../models/departement.model');
 const Employe = require('../models/employe.model');
 
-// Méthode pour créer un nouveau département
 exports.createDepartement = async (req, res) => {
   try {
     const departement = new Departement(req.body);
@@ -12,7 +11,6 @@ exports.createDepartement = async (req, res) => {
   }
 };
 
-// Méthode pour récupérer tous les départements avec les employés
 exports.getAllDepartementsWithEmployees = async (req, res) => {
   try {
     const departements = await Departement.find().populate('employees');
@@ -22,7 +20,6 @@ exports.getAllDepartementsWithEmployees = async (req, res) => {
   }
 };
 
-// Méthode pour assigner un employé à un département
 exports.assignEmployeeToDepartement = async (req, res) => {
   try {
     const { departementId, employeeId } = req.body;
@@ -31,8 +28,11 @@ exports.assignEmployeeToDepartement = async (req, res) => {
     const employee = await Employe.findById(employeeId);
 
     if (!departement || !employee) {
-      return res.status(404).send({ message: 'Département or employee not found' });
+      return res.status(404).send({ message: 'Department or employee not found' });
     }
+
+    employee.id_departement = departement._id;
+    await employee.save();
 
     departement.employees.push(employee);
     await departement.save();
@@ -43,19 +43,21 @@ exports.assignEmployeeToDepartement = async (req, res) => {
   }
 };
 
-// Méthode pour supprimer un employé d'un département
 exports.removeEmployeeFromDepartement = async (req, res) => {
   try {
     const { departementId, employeeId } = req.body;
 
     const departement = await Departement.findById(departementId);
-    const employeeIndex = departement.employees.indexOf(employeeId);
+    const employee = await Employe.findById(employeeId);
 
-    if (!departement || employeeIndex === -1) {
-      return res.status(404).send({ message: 'Département or employee not found in the department' });
+    if (!departement || !employee) {
+      return res.status(404).send({ message: 'Department or employee not found' });
     }
 
-    departement.employees.splice(employeeIndex, 1);
+    employee.id_departement = null;
+    await employee.save();
+
+    departement.employees.pull(employee);
     await departement.save();
 
     res.status(200).send({ message: 'Employee removed from department successfully' });
