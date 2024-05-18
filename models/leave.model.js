@@ -1,10 +1,11 @@
 const mongoose = require('mongoose');
 
 const leaveSchema = new mongoose.Schema({
-  employee: {
+  leaveName: String,
+  employee: [{
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Employe'
-  },
+  }],
   startDate: Date,
   endDate: Date,
   status: {

@@ -31,13 +31,13 @@ exports.getDashboardStats = async (req, res) => {
 
     // Count employees by department
     const employeesByDepartment = await Employe.aggregate([
-      { $group: { _id: '$department', count: { $sum: 1 } } }
+      { $group: { _id: '$id_departement', count: { $sum: 1 } } }
     ]);
 
     // Count employees on leave by department
     const leaveByDepartment = await Employe.aggregate([
       { $match: { isOnLeave: true } },
-      { $group: { _id: '$department', onLeaveCount: { $sum: 1 } } }
+      { $group: { _id: '$id_departement', onLeaveCount: { $sum: 1 } } }
     ]);
 
     // Count the number of distinct departments

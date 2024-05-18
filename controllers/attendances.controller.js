@@ -8,9 +8,7 @@ const DEVICE_ID_HEADER = { headers: { 'Device-ID': 'A8N5230560263' } };
 async function synchronizeAttendances() {
   console.log('Running scheduled job to fetch and sync attendances.');
   try {
-    const response = await axios.get(`${BASE_FLASK_API_URL}/attendances`, {
-      headers: { 'Device-ID': 'A8N5230560263' }
-    });
+    const response = await axios.get(`${BASE_FLASK_API_URL}/attendances`, DEVICE_ID_HEADER);
     const operations = response.data.map(attendance => ({
       updateOne: {
         filter: { uid: attendance.uid, timestamp: new Date(attendance.timestamp) },
@@ -89,10 +87,12 @@ exports.getAttendances = async (req, res) => {
         const employee = await Employe.findOne({ user_id: attendance.user_id }).populate('id_departement');
         return {
           ...attendance,
-          first_name: employee ? employee.prenom : '',
-          last_name: employee ? employee.nom : '',
-          login_method: employee ? employee.login_method : '',
-          department: employee && employee.id_departement ? employee.id_departement.name : 'Il n\'appartient pas à un département'
+          firstName: employee ? employee.prenom : '',
+          lastName: employee ? employee.nom : '',
+          loginMethod: employee ? employee.login_method : '',
+          department: employee && employee.id_departement ? employee.id_departement.name : 'Il n\'appartient pas à un département',
+          punchStatus: attendance.punch === 0 ? 'Missing' : 'Completed',
+          activeStatus: attendance.status === 1 ? 'Active' : 'Inactive',
         };
       }));
 
@@ -110,10 +110,12 @@ exports.getAttendances = async (req, res) => {
         const employee = await Employe.findOne({ user_id: attendance.user_id }).populate('id_departement');
         return {
           ...attendance.toObject(),
-          first_name: employee ? employee.prenom : '',
-          last_name: employee ? employee.nom : '',
-          login_method: employee ? employee.login_method : '',
-          department: employee && employee.id_departement ? employee.id_departement.name : 'Il n\'appartient pas à un département'
+          firstName: employee ? employee.prenom : '',
+          lastName: employee ? employee.nom : '',
+          loginMethod: employee ? employee.login_method : '',
+          department: employee && employee.id_departement ? employee.id_departement.name : 'Il n\'appartient pas à un département',
+          punchStatus: attendance.punch === 0 ? 'Missing' : 'Completed',
+          activeStatus: attendance.status === 1 ? 'Active' : 'Inactive',
         };
       }));
 

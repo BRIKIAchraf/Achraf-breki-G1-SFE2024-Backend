@@ -45,7 +45,7 @@ const cardRoutes = require('./routes/card.route');
 const departementRoutes = require('./routes/departement.route');
 const loginMethodRoutes = require('./routes/loginMethod.route');
 const searchRoutes = require('./routes/search.route');
-
+const apiStatusRoutes = require('./routes/apiStatus.route');
 app.use('/api/employes', employeRoutes);
 app.use('/api/plannings', planningRoutes);
 app.use('/api/attendances', attendanceRoutes);
@@ -56,7 +56,7 @@ app.use('/api/cards', cardRoutes);
 app.use('/api/departements', departementRoutes);
 app.use('/api/loginMethods', loginMethodRoutes);
 app.use('/api', searchRoutes);
-
+app.use('/api', apiStatusRoutes);
 // Welcome route
 app.get("/", (req, res) => {
   res.send(req.oidc.isAuthenticated() ? 'Logged in' : 'Logged out');

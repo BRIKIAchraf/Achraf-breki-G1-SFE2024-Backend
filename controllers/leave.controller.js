@@ -2,23 +2,27 @@ const Leave = require('../models/leave.model');
 const Employee = require('../models/employe.model');
 
 /**
- * Assigns a leave to an employee.
+ * Assigns a leave to an existing employee.
  * @param {Object} req - The request object.
  * @param {Object} res - The response object.
  * @returns {Promise<void>}
  */
 exports.assignLeave = async (req, res) => {
   try {
-    const { employeeId, startDate, endDate, type } = req.body;
-    const leave = new Leave({
-      employee: employeeId,
+    const { leaveName, startDate, endDate, selectedEmployees, type, status } = req.body;
+
+    // Create a new leave
+    const newLeave = new Leave({
+      leaveName,
       startDate,
       endDate,
       type,
+      status,
+      employees: selectedEmployees // assuming multiple employee selection
     });
 
-    await leave.save();
-    res.status(201).json(leave);
+    await newLeave.save();
+    res.status(201).json({ message: 'Leave assigned successfully', leave: newLeave });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -82,7 +86,7 @@ exports.listLeaves = async (req, res) => {
 
   try {
     // Fetch leaves with pagination and filtering
-    const leaves = await Leave.find(filters).skip(skip).limit(limit).populate('employee');
+    const leaves = await Leave.find(filters).skip(skip).limit(limit).populate('employees');
     const totalCount = await Leave.countDocuments(filters);
 
     res.status(200).json({ leaves, totalCount });
@@ -92,3 +96,22 @@ exports.listLeaves = async (req, res) => {
   }
 };
 
+/**
+ * Retrieves all employees for each leave.
+ * @param {Object} req - The request object.
+ * @param {Object} res - The response object.
+ * @returns {Promise<void>}
+ */
+exports.getEmployeesForLeaves = async (req, res) => {
+  try {
+    const leaves = await Leave.find().populate('employees');
+    const employeesForLeaves = leaves.map(leave => ({
+      leaveId: leave._id,
+      employees: leave.employees,
+    }));
+
+    res.status(200).json(employeesForLeaves);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};

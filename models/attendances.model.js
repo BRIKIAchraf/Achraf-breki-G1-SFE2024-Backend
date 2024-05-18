@@ -1,5 +1,3 @@
-// models/attendance.model.js
-
 const mongoose = require('mongoose');
 
 const attendanceSchema = new mongoose.Schema({
@@ -20,7 +18,8 @@ const attendanceSchema = new mongoose.Schema({
     required: true
   },
   user_id: {
-    type: String,
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Employe',
     required: true
   }
 });
