@@ -37,9 +37,9 @@ async function retryApiRequest(requestFn, retryCount = 3, delay = 2000) {
 
 exports.createEmploye = async (req, res) => {
   try {
-    const { nom, user_id } = req.body;
-    if (!nom || !user_id) {
-      return res.status(400).json({ message: "'nom' and 'user_id' fields are required." });
+    const { nom } = req.body;
+    if (!nom ) {
+      return res.status(400).json({ message: "'nom'  fields are required." });
     }
 
     let pictureUrl = '';
@@ -49,7 +49,8 @@ exports.createEmploye = async (req, res) => {
 
     const newEmploye = new Employe({
       ...req.body,
-      externalId: req.body.user_id.toString(),
+      //externalId: req.body.user_id.toString(),
+      user_id: uuidv4(),
       picture: pictureUrl
     });
     await newEmploye.save();

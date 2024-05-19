@@ -1,8 +1,9 @@
 const mongoose = require('mongoose');
+const { v4: uuidv4 } = require('uuid');
 
 const employeSchema = new mongoose.Schema({
-  user_id: { type: String, required: true, unique: true },
-  nom: { type: String, required: true },
+  user_id: { type: String, required: false, unique: true,  default: uuidv4 },
+  nom: { type: String, required: false },
   prenom: { type: String, required: true },
   date_naissance: { type: Date, required: true },
   type: { type: String, required: true },
