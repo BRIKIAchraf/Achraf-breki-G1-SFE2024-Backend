@@ -4,7 +4,7 @@ const loginMethodSchema = new mongoose.Schema({
   methodType: {
     type: String,
     enum: ['Card', 'Fingerprint', 'Password'],
-    required: true
+    required: false
   },
   identifier: { // Card number or Password hash
     type: String,

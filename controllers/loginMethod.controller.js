@@ -78,5 +78,14 @@ exports.listLoginMethods = async (req, res) => {
   }
 };
 
+exports.getAllowedLoginMethods = async (req, res) => {
+  try {
+    const allowedMethods = ['Card', 'Fingerprint', 'Password'];
+    res.status(200).json(allowedMethods);
+  } catch (error) {
+    res.status(500).json({ message: 'Error retrieving login methods: ' + error.message });
+  }
+};
+
 
 // Additional functions for handling fingerprint validation and unassignment can be added as needed.
