@@ -5,6 +5,7 @@ const Employe = require('../models/employe.model');
 const Attendance = require('../models/attendances.model');
 const BASE_FLASK_API_URL = 'https://zkpi.omegup.tn/';
 const DEVICE_ID_HEADER = { headers: { 'Device-ID': 'A8N5230560263' } };
+const { v4: uuidv4 } = require('uuid'); // Ensure you import uuidv4 correctly
 
 async function syncEmployeeDetails(id, updates) {
   const updatedEmploye = await Employe.findByIdAndUpdate(id, updates, { new: true }).populate('id_planning id_departement');
@@ -38,9 +39,10 @@ async function retryApiRequest(requestFn, retryCount = 3, delay = 2000) {
 exports.createEmploye = async (req, res) => {
   try {
     const { nom } = req.body;
-    if (!nom ) {
-      return res.status(400).json({ message: "'nom'  fields are required." });
+    if (!nom) {
+      return res.status(400).json({ message: "'nom' field is required." });
     }
+    console.log('...........')
 
     let pictureUrl = '';
     if (req.file) {
@@ -49,11 +51,16 @@ exports.createEmploye = async (req, res) => {
 
     const newEmploye = new Employe({
       ...req.body,
-      //externalId: req.body.user_id.toString(),
       user_id: uuidv4(),
       picture: pictureUrl
     });
+
+    console.log('Creating new employee:', newEmploye); // Log new employee details
+
     await newEmploye.save();
+
+    console.log('New employee created successfully:', newEmploye); // Log successful creation
+
     try {
       await retryApiRequest(() => syncEmployeeDetails(newEmploye._id, req.body));
     } catch {

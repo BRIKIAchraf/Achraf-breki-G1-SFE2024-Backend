@@ -2,9 +2,9 @@ require('dotenv').config();
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
-const WebSocket = require("ws");
+//const WebSocket = require("ws");
 const http = require("http");
-const cron = require('node-cron');
+//const cron = require('node-cron');
 const session = require('express-session');
 const { auth } = require("express-openid-connect");
 
@@ -20,7 +20,7 @@ const config = {
 
 const app = express();
 const server = http.createServer(app);
-const wss = new WebSocket.Server({ server });
+//const wss = new WebSocket.Server({ server });
 
 // Middleware setup
 app.use(express.json());
@@ -63,7 +63,7 @@ app.get("/", (req, res) => {
 });
 
 // WebSocket connection and messaging
-wss.on('connection', function connection(ws) {
+/*wss.on('connection', function connection(ws) {
   console.log('WebSocket client connected');
   ws.on('message', function incoming(message) {
     console.log('received: %s', message);
@@ -72,7 +72,7 @@ wss.on('connection', function connection(ws) {
     console.log('WebSocket client disconnected');
   });
   ws.send('Welcome to the WebSocket server!');
-});
+});*/
 
 // MongoDB connection and server initialization
 mongoose.connect("mongodb://localhost:27017/PFE-Project")

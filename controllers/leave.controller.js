@@ -115,3 +115,18 @@ exports.getEmployeesForLeaves = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+
+exports.getLeaveById = async (req, res) => {
+  try {
+    const { leaveId } = req.params;
+    const leave = await Leave.findById(leaveId).populate('employees');
+    if (!leave) {
+      return res.status(404).json({ message: 'Leave not found' });
+    }
+    res.status(200).json({ leave });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+

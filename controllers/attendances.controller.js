@@ -24,7 +24,7 @@ async function synchronizeAttendances() {
 }
 
 // Scheduled task to fetch and synchronize attendance data every 5 seconds
-setInterval(synchronizeAttendances, 5000);
+setInterval(synchronizeAttendances, 9000000);
 
 exports.manualSyncAttendances = async (req, res) => {
   try {

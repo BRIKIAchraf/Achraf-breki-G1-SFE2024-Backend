@@ -15,4 +15,5 @@ router.post('/assign-employee', departementController.assignEmployeeToDepartemen
 router.delete('/remove-employee/:id', departementController.removeEmployeeFromDepartement);
 
 router.delete('/:id', departementController.deleteDepartement);
+router.put('/:id', departementController.updateDepartement);
 module.exports = router;

@@ -50,12 +50,7 @@ exports.assignLoginMethod = async (req, res) => {
   }
 };
 
-/**
- * Lists all login methods with pagination and filtering support.
- * @param {Object} req - The request object.
- * @param {Object} res - The response object.
- * @returns {Promise<void>}
- */
+// List all login methods with pagination and filtering support
 exports.listLoginMethods = async (req, res) => {
   const { page = 1, limit = 10, inUse } = req.query;
   const skip = (page - 1) * limit;
@@ -78,6 +73,7 @@ exports.listLoginMethods = async (req, res) => {
   }
 };
 
+// Get allowed login methods
 exports.getAllowedLoginMethods = async (req, res) => {
   try {
     const allowedMethods = ['Card', 'Fingerprint', 'Password'];
@@ -87,5 +83,55 @@ exports.getAllowedLoginMethods = async (req, res) => {
   }
 };
 
+// Delete a login method
+exports.deleteLoginMethod = async (req, res) => {
+  const { loginMethodId } = req.params;
+  try {
+    const loginMethod = await LoginMethod.findByIdAndDelete(loginMethodId);
+    if (!loginMethod) {
+      return res.status(404).json({ message: 'Login method not found' });
+    }
+    res.status(200).json({ message: 'Login method deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ message: 'Error deleting login method: ' + error.message });
+  }
+};
 
-// Additional functions for handling fingerprint validation and unassignment can be added as needed.
+// Modify a login method
+exports.modifyLoginMethod = async (req, res) => {
+  const { loginMethodId } = req.params;
+  const { methodType, identifier, fingerprintTemplate } = req.body;
+  try {
+    const loginMethod = await LoginMethod.findById(loginMethodId);
+    if (!loginMethod) {
+      return res.status(404).json({ message: 'Login method not found' });
+    }
+
+    if (methodType) loginMethod.methodType = methodType;
+    if (identifier) loginMethod.identifier = identifier;
+    if (fingerprintTemplate) loginMethod.fingerprintTemplate = fingerprintTemplate;
+
+    await loginMethod.save();
+    res.status(200).json(loginMethod);
+  } catch (error) {
+    res.status(500).json({ message: 'Error modifying login method: ' + error.message });
+  }
+};
+
+// Unassign a login method from an employee
+exports.unassignLoginMethod = async (req, res) => {
+  const { loginMethodId } = req.body;
+  try {
+    const loginMethod = await LoginMethod.findById(loginMethodId);
+    if (!loginMethod) {
+      return res.status(404).json({ message: 'Login method not found' });
+    }
+
+    loginMethod.assignedTo = null;
+    loginMethod.inUse = false;
+    await loginMethod.save();
+    res.status(200).json(loginMethod);
+  } catch (error) {
+    (res.status500).json({ message: 'Error unassigning login method: ' + error.message });
+  }
+};
