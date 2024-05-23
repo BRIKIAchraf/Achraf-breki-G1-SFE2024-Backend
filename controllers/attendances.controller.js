@@ -1,4 +1,5 @@
 const axios = require('axios');
+const mongoose = require('mongoose');
 const Attendance = require('../models/attendances.model');
 const Employe = require('../models/employe.model');
 const BASE_FLASK_API_URL = 'https://zkpi.omegup.tn';
@@ -9,13 +10,21 @@ async function synchronizeAttendances() {
   console.log('Running scheduled job to fetch and sync attendances.');
   try {
     const response = await axios.get(`${BASE_FLASK_API_URL}/attendances`, DEVICE_ID_HEADER);
+    console.log('Fetched attendances from external API:', response.data);
+
     const operations = response.data.map(attendance => ({
       updateOne: {
         filter: { uid: attendance.uid, timestamp: new Date(attendance.timestamp) },
-        update: attendance,
+        update: { ...attendance, user_id: attendance.user_id },
         upsert: true
       }
     }));
+
+    if (operations.length === 0) {
+      console.warn('No valid attendances to synchronize.');
+      return;
+    }
+
     await Attendance.bulkWrite(operations);
     console.log('Attendances synchronized successfully.');
   } catch (error) {
@@ -61,10 +70,17 @@ exports.getAttendances = async (req, res) => {
 
     try {
       // Fetch attendances data from the Flask API with filters
+      console.log('Fetching attendances from external API with filters:', filterQuery);
       const response = await axios.get(`${BASE_FLASK_API_URL}/attendances`, {
         headers: { 'Device-ID': 'A8N5230560263' },
         params: filterQuery
       });
+
+      if (response.data.length === 0) {
+        console.log('No attendances found from external API.');
+      } else {
+        console.log(`Fetched ${response.data.length} attendances from external API.`);
+      }
 
       // Map and format the fetched attendances data
       const attendances = response.data.map(attendance => ({
@@ -72,19 +88,30 @@ exports.getAttendances = async (req, res) => {
         status: attendance.status,
         timestamp: new Date(attendance.timestamp),
         uid: attendance.uid,
-        user_id: attendance.user_id
+        user_id: attendance.user_id // Handle user_id as a string
       }));
+
+      console.log('Mapped attendances:', attendances);
 
       // Insert the formatted attendances data into the local database
       await Attendance.deleteMany({});
+      console.log('Cleared existing attendances from local database.');
+
       await Attendance.insertMany(attendances);
+      console.log('Inserted new attendances into local database.');
 
       // Paginate the results
       const paginatedAttendances = attendances.slice(startIndex, endIndex);
+      console.log('Paginated attendances:', paginatedAttendances);
 
       // Fetch employee details for each attendance
       const attendancesWithEmployeeDetails = await Promise.all(paginatedAttendances.map(async (attendance) => {
         const employee = await Employe.findOne({ user_id: attendance.user_id }).populate('id_departement');
+        if (employee) {
+          console.log(`Found employee for user_id ${attendance.user_id}:`, employee);
+        } else {
+          console.log(`No employee found for user_id ${attendance.user_id}`);
+        }
         return {
           ...attendance,
           firstName: employee ? employee.prenom : '',
@@ -101,13 +128,20 @@ exports.getAttendances = async (req, res) => {
 
     } catch (error) {
       console.warn('Connection to external API failed. Serving local data.');
+      console.error('Error details:', error);
 
       // Fetch from local database if external API fails
       const localAttendances = await Attendance.find(filterQuery).skip(startIndex).limit(limit);
+      console.log('Fetched attendances from local database:', localAttendances);
 
       // Fetch employee details for each local attendance
       const attendancesWithEmployeeDetails = await Promise.all(localAttendances.map(async (attendance) => {
         const employee = await Employe.findOne({ user_id: attendance.user_id }).populate('id_departement');
+        if (employee) {
+          console.log(`Found employee for user_id ${attendance.user_id}:`, employee);
+        } else {
+          console.log(`No employee found for user_id ${attendance.user_id}`);
+        }
         return {
           ...attendance.toObject(),
           firstName: employee ? employee.prenom : '',

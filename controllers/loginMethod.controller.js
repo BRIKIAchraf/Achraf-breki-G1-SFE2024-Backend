@@ -1,12 +1,33 @@
+const axios = require('axios');
 const LoginMethod = require('../models/loginMethod.model');
 const Employe = require('../models/employe.model');
+
+const BASE_FLASK_API_URL = 'https://zkpi.omegup.tn';
 
 // Add a new login method
 exports.addLoginMethod = async (req, res) => {
   try {
     const { methodType, identifier, fingerprintTemplate } = req.body;
     let newLoginMethod;
-    if (methodType === 'Fingerprint' && fingerprintTemplate) {
+
+    if (methodType === 'Fingerprint' && !fingerprintTemplate) {
+      // Fetch the fingerprint template from the external API
+      try {
+        const response = await axios.get(`${BASE_FLASK_API_URL}/templates`, {
+          headers: { 'Device-ID': 'A8N5230560263' }
+        });
+        if (response.data && response.data.template) {
+          newLoginMethod = new LoginMethod({
+            methodType,
+            fingerprintTemplate: response.data.template
+          });
+        } else {
+          return res.status(400).json({ message: 'No fingerprint template found from the external API.' });
+        }
+      } catch (error) {
+        return res.status(500).json({ message: 'Error fetching fingerprint template: ' + error.message });
+      }
+    } else if (methodType === 'Fingerprint' && fingerprintTemplate) {
       newLoginMethod = new LoginMethod({
         methodType,
         fingerprintTemplate
@@ -17,6 +38,7 @@ exports.addLoginMethod = async (req, res) => {
         identifier
       });
     }
+
     await newLoginMethod.save();
     res.status(201).json(newLoginMethod);
   } catch (error) {
@@ -79,7 +101,7 @@ exports.getAllowedLoginMethods = async (req, res) => {
     const allowedMethods = ['Card', 'Fingerprint', 'Password'];
     res.status(200).json(allowedMethods);
   } catch (error) {
-    res.status(500).json({ message: 'Error retrieving login methods: ' + error.message });
+    res.status500.json({ message: 'Error retrieving login methods: ' + error.message });
   }
 };
 
@@ -132,6 +154,6 @@ exports.unassignLoginMethod = async (req, res) => {
     await loginMethod.save();
     res.status(200).json(loginMethod);
   } catch (error) {
-    (res.status500).json({ message: 'Error unassigning login method: ' + error.message });
+    res.status(500).json({ message: 'Error unassigning login method: ' + error.message });
   }
 };

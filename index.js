@@ -7,7 +7,7 @@ const http = require("http");
 //const cron = require('node-cron');
 const session = require('express-session');
 const { auth } = require("express-openid-connect");
-
+const bodyParser = require('body-parser');
 // Configuring Auth0
 const config = {
   authRequired: false,
@@ -24,6 +24,8 @@ const server = http.createServer(app);
 
 // Middleware setup
 app.use(express.json());
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.urlencoded({ extended: false }));
 app.use(cors());
 app.use(session({
@@ -75,7 +77,7 @@ app.get("/", (req, res) => {
 });*/
 
 // MongoDB connection and server initialization
-mongoose.connect("mongodb://localhost:27017/PFE-Project")
+mongoose.connect("mongodb+srv://brikiachraf:Achraf_2021@cluster0.ixjgper.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0")
   .then(() => {
     console.log("Connected to database!");
     server.listen(process.env.PORT || 3001, () => {

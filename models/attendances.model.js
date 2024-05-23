@@ -18,8 +18,7 @@ const attendanceSchema = new mongoose.Schema({
     required: true
   },
   user_id: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Employe',
+    type: String, // Change from ObjectId to String
     required: true
   }
 });

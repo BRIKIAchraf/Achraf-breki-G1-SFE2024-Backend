@@ -1,22 +1,23 @@
-const mongoose = require('mongoose'); // Add this line to import mongoose
+const mongoose = require('mongoose');
 const Planning = require('../models/planning.model');
 const Jour = require('../models/jour.model');
+const Employe = require('../models/employe.model'); // Updated to correct model name
 
 /**
- * Creates a new planning along with associated jours.
+ * Creates a new planning along with associated jours and employees.
  * @param {Object} req - The request object.
  * @param {Object} res - The response object.
  * @returns {Promise<void>}
  */
-exports.createPlanningWithJours = async (req, res) => {
+exports.createPlanningWithJoursAndEmployees = async (req, res) => {
   const session = await mongoose.startSession();
   session.startTransaction();
 
   try {
-    const { intitule, jours } = req.body;
+    const { intitule, jours, employees } = req.body;
 
     // Create the planning
-    const newPlanning = await Planning.create([{ intitule }], { session });
+    const newPlanning = await Planning.create([{ intitule, employees }], { session });
 
     // Create jours associated with the planning
     const joursCreated = await Jour.create(
@@ -27,9 +28,16 @@ exports.createPlanningWithJours = async (req, res) => {
       { session }
     );
 
+    // Assign the planning to the employees
+    await Employe.updateMany(
+      { _id: { $in: employees } },
+      { id_planning: newPlanning[0]._id },
+      { session }
+    );
+
     await session.commitTransaction();
     res.status(201).json({
-      message: 'Planning and jours created successfully!',
+      message: 'Planning, jours, and employees created successfully!',
       planning: newPlanning,
       jours: joursCreated
     });
@@ -42,7 +50,7 @@ exports.createPlanningWithJours = async (req, res) => {
 };
 
 /**
- * Retrieves all plannings with pagination and filtering support, along with associated jours.
+ * Retrieves all plannings with pagination and filtering support, along with associated jours and employees.
  * @param {Object} req - The request object.
  * @param {Object} res - The response object.
  * @returns {Promise<void>}
@@ -53,7 +61,10 @@ exports.getAllPlannings = async (req, res) => {
 
   try {
     // Fetch plannings with pagination
-    const plannings = await Planning.find().skip(skip).limit(limit);
+    const plannings = await Planning.find()
+      .populate('employees')
+      .skip(skip)
+      .limit(limit);
 
     // Fetch associated jours for each planning
     const planningWithJours = await Promise.all(plannings.map(async (planning) => {
@@ -68,7 +79,7 @@ exports.getAllPlannings = async (req, res) => {
 };
 
 /**
- * Retrieves a planning by its ID, along with associated jours.
+ * Retrieves a planning by its ID, along with associated jours and employees.
  * @param {Object} req - The request object.
  * @param {Object} res - The response object.
  * @returns {Promise<void>}
@@ -76,7 +87,7 @@ exports.getAllPlannings = async (req, res) => {
 exports.getPlanningById = async (req, res) => {
   try {
     // Fetch planning by ID
-    const planning = await Planning.findById(req.params.id);
+    const planning = await Planning.findById(req.params.id).populate('employees');
     if (!planning) {
       return res.status(404).json({ message: 'Planning not found' });
     }
@@ -98,7 +109,7 @@ exports.getPlanningById = async (req, res) => {
  */
 exports.updatePlanning = async (req, res) => {
   try {
-    const planning = await Planning.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    const planning = await Planning.findByIdAndUpdate(req.params.id, req.body, { new: true }).populate('employees');
     if (!planning) {
       return res.status(404).json({ message: 'Planning not found' });
     }

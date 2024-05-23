@@ -1,11 +1,12 @@
 const mongoose = require('mongoose');
+const Schema = mongoose.Schema;
 
-const planningSchema = new mongoose.Schema({
-  intitule: { type: String, required: true }
+const planningSchema = new Schema({
+  intitule: { type: String, required: true },
+  employees: [{
+    type: Schema.Types.ObjectId,
+    ref: 'Employe'
+  }]
 });
 
 module.exports = mongoose.model('Planning', planningSchema);
-
-
-//const Planning = mongoose.model("Planning", planningSchema);
-//module.exports = Planning;
