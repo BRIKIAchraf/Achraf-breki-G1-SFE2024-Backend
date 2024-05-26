@@ -3,8 +3,6 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const http = require('http');
-const session = require('express-session');
-const { auth } = require('express-openid-connect');
 const bodyParser = require('body-parser');
 const path = require('path');
 const config = require('./config');
@@ -24,6 +22,7 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.urlencoded({ extended: false }));
 app.use(cors());
+
 
  // Auth0 middleware
 
