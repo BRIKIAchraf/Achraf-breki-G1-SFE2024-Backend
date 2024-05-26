@@ -5,27 +5,9 @@ const Employe = require('../models/employe.model');
 const BASE_FLASK_API_URL = 'https://zkpi.omegup.tn';
 const DEVICE_ID_HEADER = { headers: { 'Device-ID': 'A8N5230560263' } };
 
-// Function to send a notification
-const sendNotification = (change) => {
-  // Implement your notification logic here.
-  // For demonstration, we'll just log the change.
-  console.log('Change detected:', change);
-};
 
 // Function to start listening to change streams on the Attendance collection
-const startChangeStreamListener = () => {
-  const changeStream = Attendance.watch();
 
-  changeStream.on('change', (change) => {
-    sendNotification(change);
-  });
-
-  changeStream.on('error', (error) => {
-    console.error('Error in change stream:', error);
-  });
-
-  console.log('Change stream listener started.');
-};
 
 // Function to perform the synchronization
 async function synchronizeAttendances() {
@@ -54,8 +36,8 @@ async function synchronizeAttendances() {
   }
 }
 
+
 // Scheduled task to fetch and synchronize attendance data every 5 seconds
-setInterval(synchronizeAttendances, 5000); // Changed to 5 seconds
 
 exports.manualSyncAttendances = async (req, res) => {
   try {
@@ -214,4 +196,4 @@ exports.deleteAllAttendances = async (req, res) => {
 };
 
 // Start the change stream listener when the application starts
-startChangeStreamListener();
+
