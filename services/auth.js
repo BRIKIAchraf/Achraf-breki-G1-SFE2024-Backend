@@ -3,6 +3,8 @@ const Auth = require('../models/Auth');
 const errorMessage = require('../utils/errorMessage');
 const { jwtSecret } = require('../config');
 
+
+
 //jwt sign in service
 const jwtSignIn = (payload) => {
   if (!jwtSecret.access || !jwtSecret.refresh) {
@@ -14,7 +16,7 @@ const jwtSignIn = (payload) => {
   });
 
   const refreshToken = jwt.sign(payload, jwtSecret.refresh, {
-    expiresIn: '1d',
+    expiresIn: '180m',
   });
 
   return { accessToken, refreshToken };

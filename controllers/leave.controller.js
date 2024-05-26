@@ -37,7 +37,7 @@ exports.assignLeave = async (req, res) => {
 exports.revokeLeave = async (req, res) => {
   try {
     const { leaveId } = req.params;
-    const leave = await Leave.findByIdAndRemove(leaveId);
+    const leave = await Leave.findByIdAndDelete(leaveId);
     if (!leave) {
       return res.status(404).json({ message: 'Leave not found' });
     }
@@ -116,7 +116,6 @@ exports.getEmployeesForLeaves = async (req, res) => {
   }
 };
 
-
 exports.getLeaveById = async (req, res) => {
   try {
     const { leaveId } = req.params;
@@ -129,4 +128,3 @@ exports.getLeaveById = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
-
