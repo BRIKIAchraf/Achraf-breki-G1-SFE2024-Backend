@@ -20,7 +20,7 @@ const middleware = [
   helmet(), // set security HTTP headers
   cors({
     credentials: true,
-    origin: ["http://localhost:5173", "http://localhost:3003"],
+    origin: ["http://localhost:3003","https://SchoolOmegup.com"],
     optionsSuccessStatus: 200,
   }),
   express.json(),
