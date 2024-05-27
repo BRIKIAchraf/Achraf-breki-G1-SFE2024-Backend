@@ -25,7 +25,7 @@ app.use(express.static(path.join(__dirname, '..', 'public')));
 
 // CORS setup
 app.use(cors({
-  origin: ['http://localhost:3000', 'https://front-endzktecotesting-9cnatnp6z-achrafs-projects-cf98b892.vercel.app'], // Add your frontend domains
+  origin: ['http://localhost:3000', 'https://front-endzktecotesting.vercel.app/'], // Add your frontend domains
   methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
   credentials: true
 }));
