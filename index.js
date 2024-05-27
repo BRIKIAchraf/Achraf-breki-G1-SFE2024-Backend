@@ -10,21 +10,28 @@ const { globalError, notFoundError } = require('./app/error');
 const middlewares = require('./app/middleware');
 const routes = require('./routes');
 
-// Configuring Auth0
+// Create express app and server
 const app = express();
 const server = http.createServer(app);
 
 // Middleware setup
 app.use(express.json());
-app.use(middlewares);
-app.use(express.static(path.join(__dirname, "..", "public")));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.urlencoded({ extended: false }));
-app.use(cors());
 
+// Serve static files
+app.use(express.static(path.join(__dirname, '..', 'public')));
 
- // Auth0 middleware
+// CORS setup
+app.use(cors({
+  origin: ['http://localhost:3000', 'https://front-endzktecotesting-9cnatnp6z-achrafs-projects-cf98b892.vercel.app'], // Add your frontend domains
+  methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+  credentials: true
+}));
+
+// Use custom middlewares
+app.use(middlewares);
 
 // Route handlers
 const employeRoutes = require('./routes/employe.route');
@@ -50,22 +57,30 @@ app.use('/api/departements', departementRoutes);
 app.use('/api/loginMethods', loginMethodRoutes);
 app.use('/api', searchRoutes);
 app.use('/api', apiStatusRoutes);
-app.use(express.static(path.join(__dirname, "..", "public")));
 app.use(routes);
+
+// Serve React app for any unknown routes
+app.use('*', (req, res) => {
+  res.sendFile(path.join(__dirname, '..', 'public', 'index.html'));
+});
 
 // Error handlers
 app.use(notFoundError);
 app.use(globalError);
 
-mongoose.connect(config.mongooseUrl)
+// Connect to MongoDB and start the server
+mongoose.connect(config.mongooseUrl, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+})
   .then(() => {
-    console.log("Connected to database!");
+    console.log('Connected to database!');
     server.listen(config.port, () => {
       console.log(`Server running on port ${config.port}`);
     });
   })
   .catch((error) => {
-    console.error("Connection failed!", error);
+    console.error('Connection failed!', error);
   });
 
 module.exports = app;
