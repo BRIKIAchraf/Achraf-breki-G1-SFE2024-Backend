@@ -1,113 +1,86 @@
 const axios = require('axios');
 const Device = require('../models/device.model');
 
-exports.syncDevices = async (req, res) => {
+const FLASK_API_URL = 'https://zkpi.omegup.tn';
+
+exports.scanDevice = async (req, res) => {
   try {
-    const response = await axios.get('https://zkpi.omegup.tn/devices');
-    const devices = response.data;
+    const { port, inet } = req.body;
 
-    // Save devices to MongoDB
-    await Device.insertMany(devices);
-
-    res.json({ success: true, message: 'Devices synchronized' });
-  } catch (error) {
-    console.error('Error fetching devices:', error);
-    res.status(500).json({ error: 'Failed to fetch devices' });
-  }
-};
-
-exports.listDevices = async (req, res) => {
-  try {
-    const devices = await Device.find({});
-    res.json(devices);
-  } catch (error) {
-    console.error('Error listing devices:', error);
-    res.status(500).json({ error: 'Failed to list devices' });
-  }
-};
-
-exports.removeDevice = async (req, res) => {
-  const { id } = req.params;
-  try {
-    const device = await Device.findById(id);
-
-    if (!device) {
-      return res.status(404).json({ error: 'Device not found' });
+    let response;
+    if (port) {
+      response = await axios.post(`${FLASK_API_URL}/devices/scan?port=${port}`);
+    } else if (inet) {
+      response = await axios.post(`${FLASK_API_URL}/devices/scan?inet=${inet}`);
+    } else {
+      return res.status(400).send({ message: 'Invalid parameters' });
     }
 
-    await device.remove();
+    const deviceData = response.data;
 
-    try {
-      await axios.delete(`https://zkpi.omegup.tn/device/${id}`);
-      res.json({ success: true, message: 'Device removed and deletion request sent to Flask API' });
-    } catch (flaskError) {
-      console.error('Error removing device from Flask API:', flaskError);
-      res.status(500).json({ error: 'Device removed from MongoDB, but failed to delete from Flask API' });
-    }
+    const device = new Device(deviceData);
+    await device.save();
 
+    res.status(201).send(deviceData);
   } catch (error) {
-    console.error('Error removing device:', error);
-    res.status(500).json({ error: 'Failed to remove device' });
+    res.status(500).send({ message: 'An error occurred while scanning the device', error });
   }
 };
 
-exports.scanByPort = async (req, res) => {
-  const { port } = req.body;
+exports.getAllDevices = async (req, res) => {
   try {
-    const response = await axios.post(`https://zkpi.omegup.tn/devices/scan?port=${port}`);
-    const deviceData = response.data;
-
-    const newDevice = new Device(deviceData);
-    await newDevice.save();
-
-    res.json({ success: true, message: 'Device scanned by port and saved', device: newDevice });
+    const devices = await Device.find();
+    res.send(devices);
   } catch (error) {
-    console.error('Error scanning device by port:', error);
-    res.status(500).json({ error: 'Failed to scan device by port' });
-  }
-};
-
-exports.scanByInet = async (req, res) => {
-  const { inet } = req.body;
-  try {
-    const response = await axios.post(`https://zkpi.omegup.tn/devices/scan?inet=${inet}`);
-    const deviceData = response.data;
-
-    const newDevice = new Device(deviceData);
-    await newDevice.save();
-
-    res.json({ success: true, message: 'Device scanned by inet and saved', device: newDevice });
-  } catch (error) {
-    console.error('Error scanning device by inet:', error);
-    res.status(500).json({ error: 'Failed to scan device by inet' });
+    res.status(500).send(error);
   }
 };
 
 exports.pingDevice = async (req, res) => {
-  const { id } = req.params;
-  try {
-    const response = await axios.post(`https://zkpi.omegup.tn/device/${id}/ping`);
-    const pingResult = response.data;
+  const { device_id } = req.params;
 
-    res.json({ success: true, message: 'Device pinged successfully', result: pingResult });
+  try {
+    const device = await Device.findById(device_id);
+    if (!device) {
+      return res.status(404).send({ message: 'Device not found' });
+    }
+
+    const response = await axios.post(`${FLASK_API_URL}/device/${device_id}/ping`);
+    res.json(response.data);
   } catch (error) {
-    console.error('Error pinging device:', error);
-    res.status(500).json({ error: 'Failed to ping device' });
+    res.status(500).send({ message: 'An error occurred while pinging the device', error });
+  }
+};
+
+exports.removeDevice = async (req, res) => {
+  const { device_id } = req.params;
+
+  try {
+    await Device.findByIdAndDelete(device_id);
+    res.status(200).send({ message: 'Device removed successfully' });
+  } catch (error) {
+    res.status(500).send({ message: 'An error occurred while removing the device', error });
   }
 };
 
 exports.updateDevice = async (req, res) => {
-  const { id } = req.params;
+  const { device_id } = req.params;
   const { name } = req.body;
+
   try {
-    const response = await axios.patch(`https://zkpi.omegup.tn/device/${id}`, { name });
-    const updatedDevice = response.data;
+    const device = await Device.findById(device_id);
+    if (!device) {
+      return res.status(404).send({ message: 'Device not found' });
+    }
 
-    const device = await Device.findByIdAndUpdate(id, { name: updatedDevice.name }, { new: true });
+    if (name) {
+      device.name = name;
+    }
 
-    res.json({ success: true, message: 'Device updated successfully', device });
+    await device.save();
+
+    res.status(200).send({ message: 'Device updated successfully', device });
   } catch (error) {
-    console.error('Error updating device:', error);
-    res.status(500).json({ error: 'Failed to update device' });
+    res.status(500).send({ message: 'An error occurred while updating the device', error });
   }
 };

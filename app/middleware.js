@@ -20,7 +20,7 @@ const middleware = [
   helmet(), // set security HTTP headers
   cors({
     credentials: true,
-    origin: ["http://localhost:3003","https://schoolomegup-api.onrender.com","https://front-endzktecotesting-fkb7-j5whe8vpu-achrafs-projects-cf98b892.vercel.app","https://front-endzktecotesting.vercel.app","https://front-endzktecotesting-6e8qvjvtp-achrafs-projects-cf98b892.vercel.app/"],
+    origin: ["http://localhost:3000","https://schoolomegup-api.onrender.com","https://front-endzktecotesting-fkb7-j5whe8vpu-achrafs-projects-cf98b892.vercel.app","https://front-endzktecotesting.vercel.app","https://front-endzktecotesting-6e8qvjvtp-achrafs-projects-cf98b892.vercel.app/"],
     optionsSuccessStatus: 200,
   }),
   express.json(),

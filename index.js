@@ -7,7 +7,7 @@ const bodyParser = require('body-parser');
 const path = require('path');
 const config = require('./config');
 const { globalError, notFoundError } = require('./app/error');
-const middlewares = require('./app/middleware');
+const middlewares = require('./app/middle    at Layer.handle_error (/home/achraf/test/1-Expressjs-Server/Expressjs-server/node_modules/express/lib/router/layer.js:67:12) {ware');
 const routes = require('./routes');
 
 // Create express app and server
@@ -45,6 +45,9 @@ const departementRoutes = require('./routes/departement.route');
 const loginMethodRoutes = require('./routes/loginMethod.route');
 const searchRoutes = require('./routes/search.route');
 const apiStatusRoutes = require('./routes/apiStatus.route');
+const deviceRoutes = require('./routes/device.route');
+
+
 
 app.use('/api/employes', employeRoutes);
 app.use('/api/plannings', planningRoutes);
@@ -57,6 +60,7 @@ app.use('/api/departements', departementRoutes);
 app.use('/api/loginMethods', loginMethodRoutes);
 app.use('/api', searchRoutes);
 app.use('/api', apiStatusRoutes);
+app.use('/api/device', deviceRoutes);
 app.use(routes);
 
 // Serve React app for any unknown routes
