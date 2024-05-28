@@ -7,7 +7,7 @@ const bodyParser = require('body-parser');
 const path = require('path');
 const config = require('./config');
 const { globalError, notFoundError } = require('./app/error');
-const middlewares = require('./app/middle    at Layer.handle_error (/home/achraf/test/1-Expressjs-Server/Expressjs-server/node_modules/express/lib/router/layer.js:67:12) {ware');
+const middlewares = require('./app/middleware');
 const routes = require('./routes');
 
 // Create express app and server

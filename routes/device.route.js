@@ -5,7 +5,7 @@ const {
   pingDevice,
   removeDevice,
   updateDevice
-} = require('../controllers/deviceController');
+} = require('../controllers/device.controller');
 
 const router = express.Router();
 
