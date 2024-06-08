@@ -9,6 +9,7 @@ const config = require('./config');
 const { globalError, notFoundError } = require('./app/error');
 const middlewares = require('./app/middleware');
 const routes = require('./routes');
+const companyRoutes = require('./routes/company.route');
 
 // Create express app and server
 const app = express();
@@ -61,6 +62,7 @@ app.use('/api/loginMethods', loginMethodRoutes);
 app.use('/api', searchRoutes);
 app.use('/api', apiStatusRoutes);
 app.use('/api/device', deviceRoutes);
+app.use('/api', companyRoutes);
 app.use(routes);
 
 // Serve React app for any unknown routes
