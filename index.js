@@ -23,6 +23,7 @@ app.use(express.urlencoded({ extended: false }));
 
 // Serve static files
 app.use(express.static(path.join(__dirname, '..', 'public')));
+app.use('/uploads', express.static('uploads'));
 
 // CORS setup
 app.use(cors({
