@@ -76,7 +76,7 @@ exports.assignLoginMethod = async (req, res) => {
 exports.listLoginMethods = async (req, res) => {
   const { page = 1, limit = 10, inUse } = req.query;
   const skip = (page - 1) * limit;
-  const filters = {};
+  const filters = { isDeleted: false }; // Only fetch non-deleted records
 
   // Apply filter for inUse status if provided
   if (inUse !== undefined) {
@@ -101,19 +101,19 @@ exports.getAllowedLoginMethods = async (req, res) => {
     const allowedMethods = ['Card', 'Fingerprint', 'Password'];
     res.status(200).json(allowedMethods);
   } catch (error) {
-    res.status500.json({ message: 'Error retrieving login methods: ' + error.message });
+    res.status(500).json({ message: 'Error retrieving login methods: ' + error.message });
   }
 };
 
-// Delete a login method
+// Delete a login method (soft delete)
 exports.deleteLoginMethod = async (req, res) => {
   const { loginMethodId } = req.params;
   try {
-    const loginMethod = await LoginMethod.findByIdAndDelete(loginMethodId);
+    const loginMethod = await LoginMethod.findByIdAndUpdate(loginMethodId, { isDeleted: true }, { new: true });
     if (!loginMethod) {
       return res.status(404).json({ message: 'Login method not found' });
     }
-    res.status(200).json({ message: 'Login method deleted successfully' });
+    res.status(200).json({ message: 'Login method deleted successfully', loginMethod });
   } catch (error) {
     res.status(500).json({ message: 'Error deleting login method: ' + error.message });
   }

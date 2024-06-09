@@ -27,6 +27,10 @@ const loginMethodSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Employe',
     default: null
+  },
+  isDeleted: {
+    type: Boolean,
+    default: false
   }
 });
 
