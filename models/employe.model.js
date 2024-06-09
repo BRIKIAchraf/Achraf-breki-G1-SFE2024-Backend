@@ -1,3 +1,4 @@
+// employe.model.js
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 const { v4: uuidv4 } = require('uuid');
@@ -16,7 +17,10 @@ const employeSchema = new Schema({
     required: false
   },
   externalId: { type: String, unique: true, required: false },
-  picture: { type: String, required: false } // New field for picture URL
+  picture: { type: String, required: false },
+  previousPlannings: [{ type: Schema.Types.ObjectId, ref: 'Planning' }],
+  previousLeaves: [{ type: Schema.Types.ObjectId, ref: 'Leave' }],
+  previousLoginMethods: [{ type: Schema.Types.ObjectId, ref: 'LoginMethod' }]
 });
 
 module.exports = mongoose.model('Employe', employeSchema);

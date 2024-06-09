@@ -148,7 +148,21 @@ exports.getEmployeById = async (req, res) => {
     return res.status(400).json({ message: 'Invalid ID format' });
   }
   try {
-    const employe = await Employe.findById(id).populate('id_departement');
+    const employe = await Employe.findById(id)
+      .populate('id_departement')
+      .populate({
+        path: 'previousPlannings',
+        match: { isDeleted: true }
+      })
+      .populate({
+        path: 'previousLeaves',
+        match: { isDeleted: true }
+      })
+      .populate({
+        path: 'previousLoginMethods',
+        match: { isDeleted: true }
+      });
+    
     if (!employe) {
       return res.status(404).json({ message: 'Employee not found' });
     }
@@ -158,7 +172,6 @@ exports.getEmployeById = async (req, res) => {
     res.status(500).json({ message: 'Error fetching employee: ' + error.message });
   }
 };
-
 exports.getAllEmployes = async (req, res) => {
   const { page = 1, limit = 10, name } = req.query;
   const skip = (page - 1) * limit;
