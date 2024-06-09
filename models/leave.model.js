@@ -14,6 +14,7 @@ const leaveSchema = new mongoose.Schema({
     default: 'pending'
   },
   type: String, // Type de congé, exemple: "annuel", "maladie", etc.
-});
+  isDeleted: { type: Boolean, default: false }, // Soft delete flag
+}, { timestamps: true });
 
 module.exports = mongoose.model('Leave', leaveSchema);
