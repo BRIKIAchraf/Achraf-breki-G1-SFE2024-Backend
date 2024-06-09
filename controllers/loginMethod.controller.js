@@ -107,9 +107,9 @@ exports.getAllowedLoginMethods = async (req, res) => {
 
 // Delete a login method (soft delete)
 exports.deleteLoginMethod = async (req, res) => {
-  const { loginMethodId } = req.params;
+  const { id } = req.params;
   try {
-    const loginMethod = await LoginMethod.findByIdAndUpdate(loginMethodId, { isDeleted: true }, { new: true });
+    const loginMethod = await LoginMethod.findByIdAndUpdate(id, { isDeleted: true }, { new: true });
     if (!loginMethod) {
       return res.status(404).json({ message: 'Login method not found' });
     }
@@ -121,10 +121,10 @@ exports.deleteLoginMethod = async (req, res) => {
 
 // Modify a login method
 exports.modifyLoginMethod = async (req, res) => {
-  const { loginMethodId } = req.params;
+  const { id } = req.params;
   const { methodType, identifier, fingerprintTemplate } = req.body;
   try {
-    const loginMethod = await LoginMethod.findById(loginMethodId);
+    const loginMethod = await LoginMethod.findById(id);
     if (!loginMethod) {
       return res.status(404).json({ message: 'Login method not found' });
     }
