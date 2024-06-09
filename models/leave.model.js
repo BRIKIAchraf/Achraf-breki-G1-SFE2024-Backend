@@ -1,19 +1,15 @@
 const mongoose = require('mongoose');
 
-const leaveSchema = new mongoose.Schema({
-  leaveName: String,
-  employees: [{
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Employe'
-  }],
-  startDate: Date,
-  endDate: Date,
-  status: {
-    type: String,
-    enum: ['pending', 'approved', 'denied'],
-    default: 'pending'
-  },
-  type: String, // Type de congé, exemple: "annuel", "maladie", etc.
-});
+const LeaveSchema = new mongoose.Schema({
+  leaveName: { type: String, required: true },
+  startDate: { type: Date, required: true },
+  endDate: { type: Date, required: true },
+  type: { type: String, required: true },
+  status: { type: String, required: true },
+  employees: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Employee' }],
+  isDeleted: { type: Boolean, default: false }, // Soft delete flag
+}, { timestamps: true });
 
-module.exports = mongoose.model('Leave', leaveSchema);
+const Leave = mongoose.model('Leave', LeaveSchema);
+
+module.exports = Leave;
