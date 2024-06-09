@@ -29,7 +29,7 @@ exports.assignLeave = async (req, res) => {
 };
 
 /**
- * Revokes a leave assigned to an employee (soft delete).
+ * Revokes a leave assigned to an employee.
  * @param {Object} req - The request object.
  * @param {Object} res - The response object.
  * @returns {Promise<void>}
@@ -37,11 +37,11 @@ exports.assignLeave = async (req, res) => {
 exports.revokeLeave = async (req, res) => {
   try {
     const { leaveId } = req.params;
-    const leave = await Leave.findByIdAndUpdate(leaveId, { isDeleted: true }, { new: true });
+    const leave = await Leave.findByIdAndDelete(leaveId);
     if (!leave) {
       return res.status(404).json({ message: 'Leave not found' });
     }
-    res.status(200).json({ message: 'Leave revoked', leave });
+    res.status(200).json({ message: 'Leave revoked' });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -77,7 +77,7 @@ exports.modifyLeave = async (req, res) => {
 exports.listLeaves = async (req, res) => {
   const { page = 1, limit = 10, status } = req.query;
   const skip = (page - 1) * limit;
-  const filters = { isDeleted: false }; // Exclude soft-deleted records
+  const filters = {};
 
   // Apply status filter if provided
   if (status) {
@@ -104,7 +104,7 @@ exports.listLeaves = async (req, res) => {
  */
 exports.getEmployeesForLeaves = async (req, res) => {
   try {
-    const leaves = await Leave.find({ isDeleted: false }).populate('employees'); // Include the isDeleted filter
+    const leaves = await Leave.find().populate('employees');
     const employeesForLeaves = leaves.map(leave => ({
       leaveId: leave._id,
       employees: leave.employees,
@@ -116,16 +116,10 @@ exports.getEmployeesForLeaves = async (req, res) => {
   }
 };
 
-/**
- * Retrieves a leave by its ID.
- * @param {Object} req - The request object.
- * @param {Object} res - The response object.
- * @returns {Promise<void>}
- */
 exports.getLeaveById = async (req, res) => {
   try {
     const { leaveId } = req.params;
-    const leave = await Leave.findOne({ _id: leaveId, isDeleted: false }).populate('employees'); // Include the isDeleted filter
+    const leave = await Leave.findById(leaveId).populate('employees');
     if (!leave) {
       return res.status(404).json({ message: 'Leave not found' });
     }
