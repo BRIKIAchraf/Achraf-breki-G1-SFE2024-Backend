@@ -3,12 +3,9 @@ const router = express.Router();
 const planningController = require('../controllers/planning.controller'); // Make sure the path matches the location of your controller file
 
 router.post('/', planningController.createPlanningWithJoursAndEmployees);
-
-// Correct the paths for other HTTP methods as well, they should be relative to '/api/plannings'
 router.get('/', planningController.getAllPlannings);
 router.get('/:id', planningController.getPlanningById);
 router.put('/:id', planningController.updatePlanning);
-router.delete('/:id', planningController.deletePlanning);
+router.put('/delete/:id', planningController.deletePlanning); // Changed to PUT for consistency
 
 module.exports = router;
-

@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 const Planning = require('../models/planning.model');
 const Jour = require('../models/jour.model');
-const Employe = require('../models/employe.model'); // Updated to correct model name
+const Employe = require('../models/employe.model');
 
 /**
  * Creates a new planning along with associated jours and employees.
@@ -61,7 +61,7 @@ exports.getAllPlannings = async (req, res) => {
 
   try {
     // Fetch plannings with pagination
-    const plannings = await Planning.find()
+    const plannings = await Planning.find({ isDeleted: false })
       .populate('employees')
       .skip(skip)
       .limit(limit);
@@ -87,7 +87,7 @@ exports.getAllPlannings = async (req, res) => {
 exports.getPlanningById = async (req, res) => {
   try {
     // Fetch planning by ID
-    const planning = await Planning.findById(req.params.id).populate('employees');
+    const planning = await Planning.findOne({ _id: req.params.id, isDeleted: false }).populate('employees');
     if (!planning) {
       return res.status(404).json({ message: 'Planning not found' });
     }
@@ -120,19 +120,19 @@ exports.updatePlanning = async (req, res) => {
 };
 
 /**
- * Deletes a planning by its ID.
+ * Deletes a planning by its ID (soft delete).
  * @param {Object} req - The request object.
  * @param {Object} res - The response object.
  * @returns {Promise<void>}
  */
 exports.deletePlanning = async (req, res) => {
   try {
-    await Planning.findByIdAndDelete(req.params.id);
-    res.status(204).send();
+    const planning = await Planning.findByIdAndUpdate(req.params.id, { isDeleted: true }, { new: true });
+    if (!planning) {
+      return res.status(404).json({ message: 'Planning not found' });
+    }
+    res.status(200).json({ message: 'Planning deleted', planning });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
-
-
-

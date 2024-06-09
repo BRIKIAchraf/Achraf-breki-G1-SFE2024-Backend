@@ -6,7 +6,8 @@ const planningSchema = new Schema({
   employees: [{
     type: Schema.Types.ObjectId,
     ref: 'Employe'
-  }]
-});
+  }],
+  isDeleted: { type: Boolean, default: false }, // Soft delete flag
+}, { timestamps: true });
 
 module.exports = mongoose.model('Planning', planningSchema);
