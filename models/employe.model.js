@@ -1,4 +1,3 @@
-// employe.model.js
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 const { v4: uuidv4 } = require('uuid');
@@ -11,11 +10,7 @@ const employeSchema = new Schema({
   type: { type: String, required: true },
   id_planning: { type: Schema.Types.ObjectId, ref: 'Planning', required: false },
   id_departement: { type: Schema.Types.ObjectId, ref: 'Departement', required: false },
-  login_method: {
-    type: String,
-    enum: ['PassOrFingerOrCard', 'Card', 'FingerAndPass'],
-    required: false
-  },
+  login_method: { type: Schema.Types.ObjectId, ref: 'LoginMethod', required: false },
   externalId: { type: String, unique: true, required: false },
   picture: { type: String, required: false },
   previousPlannings: [{ type: Schema.Types.ObjectId, ref: 'Planning' }],

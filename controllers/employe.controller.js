@@ -5,15 +5,15 @@ const Employe = require('../models/employe.model');
 const Attendance = require('../models/attendances.model');
 const BASE_FLASK_API_URL = 'https://zkpi.omegup.tn/';
 const DEVICE_ID_HEADER = { headers: { 'Device-ID': 'A8N5230560263' } };
-const { v4: uuidv4 } = require('uuid'); // Ensure you import uuidv4 correctly
+const { v4: uuidv4 } = require('uuid');
 
 async function syncEmployeeDetails(id, updates) {
-  const updatedEmploye = await Employe.findByIdAndUpdate(id, updates, { new: true }).populate('id_planning id_departement');
+  const updatedEmploye = await Employe.findByIdAndUpdate(id, updates, { new: true }).populate('id_planning id_departement login_method');
   try {
     await axios.patch(`${BASE_FLASK_API_URL}/user/${id}`, {
       planning: updatedEmploye.id_planning ? updatedEmploye.id_planning.name : '',
       departement: updatedEmploye.id_departement ? updatedEmploye.id_departement.name : '',
-      login_method: updatedEmploye.login_method
+      login_method: updatedEmploye.login_method ? updatedEmploye.login_method.method : ''
     }, DEVICE_ID_HEADER);
   } catch (error) {
     console.error('Error syncing employee details with external API:', error);
@@ -111,7 +111,7 @@ exports.deleteEmploye = async (req, res) => {
 exports.generateEmployeeReport = async (req, res) => {
   try {
     const { id } = req.params;
-    const employe = await Employe.findById(id);
+    const employe = await Employe.findById(id).populate('id_departement login_method');
     
     if (!employe) {
       return res.status(404).send('Employé non trouvé');
@@ -146,6 +146,7 @@ exports.getEmployeById = async (req, res) => {
   try {
     const employe = await Employe.findById(id)
       .populate('id_departement')
+      .populate('login_method')
       .populate({
         path: 'previousPlannings',
         match: { isDeleted: true }
@@ -197,7 +198,7 @@ exports.getAllEmployes = async (req, res) => {
       console.warn('Connection to external API failed. Serving local data.');
     }
 
-    const localEmployes = await Employe.find(filters).skip(skip).limit(limit).populate('id_departement');
+    const localEmployes = await Employe.find(filters).skip(skip).limit(limit).populate('id_departement login_method');
     const totalCount = await Employe.countDocuments(filters);
 
     res.status(200).json({ employees: localEmployes, totalCount });
