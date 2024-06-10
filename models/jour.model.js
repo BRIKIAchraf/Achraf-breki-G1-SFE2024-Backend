@@ -1,14 +1,11 @@
-  const mongoose = require('mongoose');
+const mongoose = require('mongoose');
+const Schema = mongoose.Schema;
 
-  const jourSchema = new mongoose.Schema({
-    h_entree1: { type: Date },
-    h_sortie1: { type: Date },
-    h_entree2: { type: Date },
-    h_sortie2: { type: Date },
-    id_planning: { type: mongoose.Schema.Types.ObjectId, ref: 'Planning' }
-  });
+const jourSchema = new Schema({
+  h_entree: { type: Date, required: true },
+  h_sortie: { type: Date, required: true },
+  id_planning: { type: Schema.Types.ObjectId, ref: 'Planning', required: true },
+  isDeleted: { type: Boolean, default: false }
+}, { timestamps: true });
 
-  module.exports = mongoose.model('Jour', jourSchema);
-
-  //const Jour = mongoose.model("Jour", jourSchema);
-  //module.exports = Jour;
+module.exports = mongoose.model('Jour', jourSchema);

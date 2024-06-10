@@ -14,15 +14,21 @@ exports.createPlanningWithJoursAndEmployees = async (req, res) => {
   session.startTransaction();
 
   try {
-    const { intitule, jours, employees } = req.body;
+    const { intitule, sessions, employees } = req.body;
+
+    // Validate request body
+    if (!intitule || !sessions || !employees) {
+      throw new Error('Invalid input data');
+    }
 
     // Create the planning
     const newPlanning = await Planning.create([{ intitule, employees }], { session });
 
     // Create jours associated with the planning
     const joursCreated = await Jour.create(
-      jours.map((jour) => ({
-        ...jour,
+      sessions.map((session) => ({
+        h_entree: session.h_entree,
+        h_sortie: session.h_sortie,
         id_planning: newPlanning[0]._id
       })),
       { session }
