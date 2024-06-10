@@ -1,5 +1,6 @@
 const Employe = require('../models/employe.model');
-const Departement = require('../models/departement.model'); // Assuming you have a department model
+const Departement = require('../models/departement.model');
+const Attendance = require('../models/attendances.model'); // Assuming you have an attendance model
 
 /**
  * Retrieves dashboard statistics.
@@ -58,6 +59,9 @@ exports.getDashboardStats = async (req, res) => {
     // Count the number of distinct departments
     const departmentCount = departments.length;
 
+    // Calculate performance, absent, and present data
+    const performanceData = await calculatePerformanceData();
+
     // Send the dashboard statistics as JSON response
     res.status(200).json({
       totalEmployees,
@@ -68,10 +72,37 @@ exports.getDashboardStats = async (req, res) => {
       employeesOnLeave,
       departmentCount,
       employeesByDepartment: employeesByDepartmentWithNames,
-      leaveByDepartment: leaveByDepartmentWithNames
+      leaveByDepartment: leaveByDepartmentWithNames,
+      performanceData
     });
   } catch (error) {
     // Handle errors and send appropriate response
     res.status(500).json({ message: 'Error fetching dashboard stats: ' + error.message });
   }
+};
+
+/**
+ * Calculates performance data for employees.
+ * @returns {Promise<Object>}
+ */
+const calculatePerformanceData = async () => {
+  const performanceData = [];
+
+  const employees = await Employe.find({});
+  for (const emp of employees) {
+    const attendances = await Attendance.find({ employeeId: emp._id });
+
+    const presentCount = attendances.filter(att => att.status === 'present').length;
+    const absentCount = attendances.filter(att => att.status === 'absent').length;
+
+    performanceData.push({
+      employeeId: emp._id,
+      employeeName: `${emp.nom} ${emp.prenom}`,
+      presentCount,
+      absentCount,
+      performance: (presentCount / (presentCount + absentCount)) * 100 || 0
+    });
+  }
+
+  return performanceData;
 };
