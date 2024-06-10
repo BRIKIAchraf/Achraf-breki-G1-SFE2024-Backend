@@ -92,8 +92,14 @@ const calculatePerformanceData = async () => {
   for (const emp of employees) {
     const attendances = await Attendance.find({ employeeId: emp._id });
 
+    console.log(`Employee: ${emp.nom} ${emp.prenom}`);
+    console.log(`Attendance Records: ${attendances.length}`);
+
     const presentCount = attendances.filter(att => att.status === 'present').length;
     const absentCount = attendances.filter(att => att.status === 'absent').length;
+
+    console.log(`Present Count: ${presentCount}`);
+    console.log(`Absent Count: ${absentCount}`);
 
     performanceData.push({
       employeeId: emp._id,
