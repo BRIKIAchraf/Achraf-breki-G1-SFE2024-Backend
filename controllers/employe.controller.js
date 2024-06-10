@@ -1,9 +1,9 @@
-const mongoose = require('mongoose');
 const axios = require('axios');
-const PDFDocument = require('pdfkit');
+const mongoose = require('mongoose');
 const Employe = require('../models/employe.model');
-const Attendance = require('../models/attendances.model');
-const BASE_FLASK_API_URL = 'https://zkpi.omegup.tn/';
+const Departement = require('../models/departement.model');
+const LoginMethod = require('../models/loginMethod.model');
+const BASE_FLASK_API_URL = 'https://zkpi.omegup.tn';
 const DEVICE_ID_HEADER = { headers: { 'Device-ID': 'A8N5230560263' } };
 const { v4: uuidv4 } = require('uuid'); // Ensure you import uuidv4 correctly
 
@@ -38,28 +38,32 @@ async function retryApiRequest(requestFn, retryCount = 3, delay = 2000) {
 
 exports.createEmploye = async (req, res) => {
   try {
-    const { nom } = req.body;
-    if (!nom) {
-      return res.status(400).json({ message: "'nom' field is required." });
-    }
-    console.log('...........')
-
-    let pictureUrl = '';
-    if (req.file) {
-      pictureUrl = `/uploads/${req.file.filename}`;
+    const { nom, prenom, date_naissance, type, id_planning, id_departement, login_method, externalId, picture, previousPlannings, previousLeaves, previousLoginMethods } = req.body;
+    if (!nom || !prenom || !date_naissance || !type) {
+      return res.status(400).json({ message: "'nom', 'prenom', 'date_naissance', and 'type' fields are required." });
     }
 
     const newEmploye = new Employe({
-      ...req.body,
       user_id: uuidv4(),
-      picture: pictureUrl
+      nom,
+      prenom,
+      date_naissance,
+      type,
+      id_planning,
+      id_departement,
+      login_method,
+      externalId,
+      picture,
+      previousPlannings,
+      previousLeaves,
+      previousLoginMethods
     });
 
-    console.log('Creating new employee:', newEmploye); // Log new employee details
+    console.log('Creating new employee:', newEmploye);
 
     await newEmploye.save();
 
-    console.log('New employee created successfully:', newEmploye); // Log successful creation
+    console.log('New employee created successfully:', newEmploye);
 
     try {
       await retryApiRequest(() => syncEmployeeDetails(newEmploye._id, req.body));
@@ -172,6 +176,7 @@ exports.getEmployeById = async (req, res) => {
     res.status(500).json({ message: 'Error fetching employee: ' + error.message });
   }
 };
+
 exports.getAllEmployes = async (req, res) => {
   const { page = 1, limit = 10, name } = req.query;
   const skip = (page - 1) * limit;
