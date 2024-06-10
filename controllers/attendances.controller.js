@@ -5,10 +5,6 @@ const Employe = require('../models/employe.model');
 const BASE_FLASK_API_URL = 'https://zkpi.omegup.tn';
 const DEVICE_ID_HEADER = { headers: { 'Device-ID': 'A8N5230560263' } };
 
-
-// Function to start listening to change streams on the Attendance collection
-
-
 // Function to perform the synchronization
 async function synchronizeAttendances() {
   console.log('Running scheduled job to fetch and sync attendances.');
@@ -35,7 +31,6 @@ async function synchronizeAttendances() {
     console.error('Error during scheduled attendance fetch:', error);
   }
 }
-
 
 // Scheduled task to fetch and synchronize attendance data every 5 seconds
 
@@ -194,6 +189,3 @@ exports.deleteAllAttendances = async (req, res) => {
     res.status(error.response ? error.response.status : 500).json({ message: error.message });
   }
 };
-
-// Start the change stream listener when the application starts
-
