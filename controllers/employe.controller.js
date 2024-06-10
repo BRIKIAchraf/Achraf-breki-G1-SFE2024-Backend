@@ -1,9 +1,9 @@
-const axios = require('axios');
 const mongoose = require('mongoose');
+const axios = require('axios');
+const PDFDocument = require('pdfkit');
 const Employe = require('../models/employe.model');
-const Departement = require('../models/departement.model');
-const LoginMethod = require('../models/loginMethod.model');
-const BASE_FLASK_API_URL = 'https://zkpi.omegup.tn';
+const Attendance = require('../models/attendances.model');
+const BASE_FLASK_API_URL = 'https://zkpi.omegup.tn/';
 const DEVICE_ID_HEADER = { headers: { 'Device-ID': 'A8N5230560263' } };
 const { v4: uuidv4 } = require('uuid'); // Ensure you import uuidv4 correctly
 
@@ -38,33 +38,25 @@ async function retryApiRequest(requestFn, retryCount = 3, delay = 2000) {
 
 exports.createEmploye = async (req, res) => {
   try {
-    const { nom, prenom, date_naissance, type, id_planning, id_departement, login_method, externalId, picture, previousPlannings, previousLeaves, previousLoginMethods } = req.body;
+    const { nom, prenom, date_naissance, type, id_departement, login_method } = req.body;
     if (!nom || !prenom || !date_naissance || !type) {
-      return res.status(400).json({ message: "'nom', 'prenom', 'date_naissance', and 'type' fields are required." });
+      return res.status(400).json({ message: "Required fields are missing." });
+    }
+
+    let pictureUrl = '';
+    if (req.file) {
+      pictureUrl = `/uploads/${req.file.filename}`;
     }
 
     const newEmploye = new Employe({
+      ...req.body,
       user_id: uuidv4(),
-      nom,
-      prenom,
-      date_naissance,
-      type,
-      id_planning,
-      id_departement,
-      login_method,
-      externalId,
-      picture,
-      previousPlannings,
-      previousLeaves,
-      previousLoginMethods
+      picture: pictureUrl
     });
-
-    console.log('Creating new employee:', newEmploye);
 
     await newEmploye.save();
 
-    console.log('New employee created successfully:', newEmploye);
-
+    // Sync with external API
     try {
       await retryApiRequest(() => syncEmployeeDetails(newEmploye._id, req.body));
     } catch {
