@@ -27,7 +27,7 @@ app.use('/uploads', express.static('uploads'));
 
 // CORS setup
 app.use(cors({
-  origin: ['http://localhost:3000', 'https://front-endzktecotesting.vercel.app','https://front-endzktecotesting-6e8qvjvtp-achrafs-projects-cf98b892.vercel.app'], // Add your frontend domains
+  origin: ['http://localhost:3000', 'https://main--att-mgmt.netlify.app'], // Add your frontend domains
   methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
   credentials: true
 }));
