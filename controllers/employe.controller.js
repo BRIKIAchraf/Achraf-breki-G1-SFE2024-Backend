@@ -3,7 +3,7 @@ const axios = require('axios');
 const PDFDocument = require('pdfkit');
 const Employe = require('../models/employe.model');
 const Attendance = require('../models/attendances.model');
-const BASE_FLASK_API_URL = 'https://zkpi.omegup.tn/';
+const BASE_FLASK_API_URL = 'http://localhost:3000/';
 const DEVICE_ID_HEADER = { headers: { 'Device-ID': 'A8N5230560263' } };
 const { v4: uuidv4 } = require('uuid');
 

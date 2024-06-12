@@ -1,7 +1,7 @@
 const axios = require('axios');
 const Device = require('../models/device.model');
 
-const FLASK_API_URL = 'https://zkpi.omegup.tn';
+const FLASK_API_URL = 'http://localhost:3000/';
 
 exports.scanDevice = async (req, res) => {
   try {

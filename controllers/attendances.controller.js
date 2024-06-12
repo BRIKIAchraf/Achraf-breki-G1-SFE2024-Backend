@@ -2,7 +2,7 @@ const axios = require('axios');
 const mongoose = require('mongoose');
 const Attendance = require('../models/attendances.model');
 const Employe = require('../models/employe.model');
-const BASE_FLASK_API_URL = 'https://zkpi.omegup.tn';
+const BASE_FLASK_API_URL = 'http://localhost:3000/';
 const DEVICE_ID_HEADER = { headers: { 'Device-ID': 'A8N5230560263' } };
 
 // Function to perform the synchronization

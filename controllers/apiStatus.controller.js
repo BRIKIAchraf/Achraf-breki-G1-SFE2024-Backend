@@ -3,7 +3,7 @@ const axios = require('axios');
 
 const checkExternalApiStatus = async (req, res) => {
   try {
-    const response = await axios.get('https://zkpi.omegup.tn/status');
+    const response = await axios.get('http://localhost:3000/status');
     if (response.status === 200) {
       res.json({ status: 'active', message: 'External API is working fine.' });
     } else {

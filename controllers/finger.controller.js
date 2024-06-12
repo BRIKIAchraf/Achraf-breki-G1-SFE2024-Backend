@@ -2,7 +2,7 @@ const axios = require('axios');
 const LoginMethod = require('../models/loginMethod.model');
 const Employe = require('../models/employe.model');
 
-const BASE_FLASK_API_URL = 'https://zkpi.omegup.tn';
+const BASE_FLASK_API_URL = 'http://localhost:3000/';
 
 // Enroll a user's finger
 exports.enrollFinger = async (req, res) => {
